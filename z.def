@@ -1,0 +1,5 @@
+DEFINITION MODULE z ;
+
+PROCEDURE zproc ;
+
+END z.

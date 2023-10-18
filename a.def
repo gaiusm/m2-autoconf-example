@@ -1,0 +1,5 @@
+DEFINITION MODULE a ;
+
+PROCEDURE aproc ;
+
+END a.

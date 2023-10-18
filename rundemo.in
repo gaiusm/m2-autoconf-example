@@ -1,0 +1,37 @@
+#!/bin/bash
+
+srcdir=@srcdir@
+
+echo "firstly we build everything using make"
+echo "press enter to continue"
+read ans
+
+make
+echo "run the executable top"
+./top
+
+echo "secondly we modify the module z.def to export procedure bar"
+echo "         and use make which will result in a.mod and c.mod being recompiled"
+echo "         and top.mod relinked"
+echo "press enter to continue"
+read ans
+
+cp ${srcdir}/version2/z.def ${srcdir}/z.def
+cp ${srcdir}/version2/c.mod ${srcdir}/c.mod
+
+make
+echo "run the executable top"
+./top
+
+echo "thirdly we restore the source files to their original contents and rebuild"
+echo "         which will result in a.mod and c.mod being recompiled"
+echo "         and top.mod relinked again"
+echo "press enter to continue"
+read ans
+
+cp ${srcdir}/version3/z.def ${srcdir}/z.def
+cp ${srcdir}/version3/c.mod ${srcdir}/c.mod
+
+make
+echo "run the executable top"
+./top
