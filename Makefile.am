@@ -28,9 +28,6 @@ top.o: top.mod
 	@test -z .deps || mkdir -p .deps
 	gm2 $(DEPFLAGS) -I$(srcdir) -c $<
 
-.c.o:
-	gcc -c -O0 -g $<
-
 DEPFILES=$(top_SOURCES:%.mod=.deps/%.d)
 
 $(DEPFILES):

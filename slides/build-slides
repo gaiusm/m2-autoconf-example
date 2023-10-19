@@ -1,0 +1,9 @@
+#!/bin/bash
+
+
+groff -M. -mgp -P-l -rlandscape=1 m2-automake.n > m2-automake.ps
+gs -dBATCH -dNOPAUSE -sOutputFile=m2-automake.pdf -sDEVICE=pdfwrite \
+           -dAutoRotatePages=/None \
+           -c "<< /PageSize [612 792] /Orientation 3 >> setpagedevice" \
+           90 rotate 0 -612 translate -f m2-automake.ps
+evince m2-automake.pdf

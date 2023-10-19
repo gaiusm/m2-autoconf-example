@@ -281,7 +281,6 @@ DEPS = a.o \
        z.o \
        top.o
 
-M2FLAGS = 
 top_SOURCES = top.mod \
        a.mod \
        b.mod \
@@ -293,7 +292,7 @@ all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
 .SUFFIXES:
-.SUFFIXES: .mod .def .o .a .c
+.SUFFIXES: .mod .def .o .a
 am--refresh: Makefile
 	@:
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
@@ -759,14 +758,11 @@ top$(EXEEXT): $(DEPS)
 .deps: ; @mkdir -p $@
 
 top.o: top.mod
-	gm2 $(DEPFLAGS) $(M2FLAGS) -I$(srcdir) -c -fscaffold-main -fscaffold-dynamic $<
+	gm2 $(DEPFLAGS) -I$(srcdir) -c -fscaffold-main -fscaffold-dynamic $<
 
 %.o: %.mod .deps/%.d
 	@test -z .deps || mkdir -p .deps
-	gm2 $(DEPFLAGS) $(M2FLAGS) -I$(srcdir) -c $<
-
-.c.o:
-	gcc -c -O0 -g $<
+	gm2 $(DEPFLAGS) -I$(srcdir) -c $<
 
 $(DEPFILES):
 

@@ -1,0 +1,205 @@
+.T
+Using GNU Automake with gm2
+.B
+.PRG gm2
+(from gcc-14 onwards) supports
+.PRG -M ,
+.PRG -MM ,
+.PRG -MD ,
+.PRG -MMD ,
+.PRG -MP ,
+.PRG -MT
+and
+.PRG -MQ
+.URL https://gcc.gnu.org/onlinedocs/gcc/Preprocessor-Options.html
+.B
+.PRG -M
+and
+.PRG -MM
+are run without generating any code (in the preprocessor stage).
+.B
+.PRG -MD ,
+.PRG -MMD
+are run with the compiler and therefore the command line can generate dependencies and also code.
+.C
+the example project here uses
+.PRG -MMD
+as one command line can be used to generate an object file and a dependency file.
+.bp
+.T
+Example project
+.B
+the example project
+.PRG m2-autoconf-example
+is available via:
+.B-EXAMPLE-BEGIN
+.CMD git clone https://github.com/gaiusm/m2-autoconf-example
+.B-EXAMPLE-END
+.B
+consists of a tiny example modula-2 project containing modules:
+.C
+.PRG top.mod
+the application level module
+.C
+.PRG z.def
+and
+.PRG z.mod
+the lowest level module exporting
+.PRG zproc
+.C
+module
+.PRG a.def
+and
+.PRG a.mod
+(also imports module
+.PRG z )
+.C
+module
+.PRG b.def
+and
+.PRG b.mod
+.C
+module
+.PRG a.def
+and
+.PRG a.mod
+(also imports module
+.PRG z )
+.bp
+.T
+configure and compile project
+.B-EXAMPLE-BEGIN
+.CMD mkdir build-m2-autoconf-example
+.CMD cd build-m2-autoconf-example
+.CMD ../m2-autoconf-example/configure
+.CMD make
+gm2 -MMD -MT a.o -MP -MF .deps/a.d  -I../m2-autoconf-example \e
+    -c ../m2-autoconf-example/a.mod
+gm2 -MMD -MT b.o -MP -MF .deps/b.d  -I../m2-autoconf-example \e
+    -c ../m2-autoconf-example/b.mod
+gm2 -MMD -MT c.o -MP -MF .deps/c.d  -I../m2-autoconf-example \e
+    -c ../m2-autoconf-example/c.mod
+gm2 -MMD -MT z.o -MP -MF .deps/z.d  -I../m2-autoconf-example \e
+    -c ../m2-autoconf-example/z.mod
+gm2 -MMD -MT top.o -MP -MF .deps/top.d  -I../m2-autoconf-example \e
+    -c -fscaffold-main -fscaffold-dynamic \e
+    ../m2-autoconf-example/top.mod
+gm2 a.o b.o c.o z.o top.o -o top
+.B-EXAMPLE-END
+.B
+modules:
+.PRG a ,
+.PRG b ,
+.PRG c ,
+.PRG z
+are all compiled using the same rule.
+.bp
+.B
+module
+.PRG top
+is compiled to include the
+C
+function
+.PRG main
+and also the runtime scaffold to initialize all modules.
+.C
+but the rule does not perform the link
+.B
+the final
+.PRG gm2
+command links and place the executable into
+.PRG top
+.bp
+.B
+on inspection we can see that the dependencies for module
+.PRG c
+are stored in file
+.PRG .deps/c.d
+with contents:
+.B-EXAMPLE-BEGIN
+c.o: \e
+ ../m2-autoconf-example/c.mod \e
+ ../m2-autoconf-example/c.def \e
+ ../m2-autoconf-example/z.def
+.B-EXAMPLE-END
+.bp
+.T
+Makefile.am
+.B-EXAMPLE-BEGIN
+
+SUFFIXES = .mod .def .o .a
+
+DEPFLAGS=-MMD -MT $@ -MP -MF .deps/$*.d
+
+DEPS = a.o \e
+       b.o \e
+       c.o \e
+       z.o \e
+       top.o
+
+bin_PROGRAMS = top
+top_SOURCES = top.mod \e
+       a.mod \e
+       b.mod \e
+       c.mod \e
+       z.mod
+.B-EXAMPLE-END
+.bp
+.B-EXAMPLE-BEGIN
+top$(EXEEXT): $(DEPS)
+	gm2 $(DEPS) -o $@
+
+.deps: ; @mkdir -p $@
+
+top.o: top.mod
+	gm2 $(DEPFLAGS) -I$(srcdir) -c \e
+	    -fscaffold-main -fscaffold-dynamic $<
+
+%.o: %.mod .deps/%.d
+	@test -z .deps || mkdir -p .deps
+	gm2 $(DEPFLAGS) -I$(srcdir) -c $<
+.B-EXAMPLE-END
+.bp
+.B-EXAMPLE-BEGIN
+DEPFILES=$(top_SOURCES:%.mod=.deps/%.d)
+
+$(DEPFILES):
+
+include $(wildcard $(DEPFILES))
+.B-EXAMPLE-END
+.bp
+.T
+rundemo
+.B
+the script
+.PRG rundemo
+runs
+.PRG make
+then modifies module
+.PRG z
+to export procedure
+.PRG bar .
+It also modifies
+module
+.PRG c
+to call
+.PRG bar
+.C
+.PRG make
+is run again which results in a recompile of modules:
+.PRG a ,
+.PRG c
+and
+.PRG z .
+It then links all modules
+.bp
+.B-EXAMPLE-BEGIN
+.CMD bash rundemo
+gm2 -MMD -MT a.o -MP -MF .deps/a.d -I../m2-autoconf-example \e
+    -c ../m2-autoconf-example/a.mod
+gm2 -MMD -MT c.o -MP -MF .deps/c.d -I../m2-autoconf-example \e
+    -c ../m2-autoconf-example/c.mod
+gm2 -MMD -MT z.o -MP -MF .deps/z.d -I../m2-autoconf-example \e
+    -c ../m2-autoconf-example/z.mod
+gm2 a.o b.o c.o z.o top.o -o top
+.B-EXAMPLE-END
